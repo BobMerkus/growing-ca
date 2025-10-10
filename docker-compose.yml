@@ -1,0 +1,23 @@
+services:
+  gnca-service:
+    build: .
+    image: gnca
+    volumes:
+      - .:/home/runner
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    runtime: nvidia
+    environment:
+      - HTTP_PROXY=http://host.docker.internal:17890
+      - HTTPS_PROXY=http://host.docker.internal:17890
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "2535:8888"
