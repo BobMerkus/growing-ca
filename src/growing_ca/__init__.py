@@ -1,3 +1,3 @@
-from growing_ca.main_pygame_dl import main
+from growing_ca.cli import main
 
 __all__ = ["main"]

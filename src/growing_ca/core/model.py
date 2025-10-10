@@ -32,6 +32,7 @@ class CAModel(nn.Module):
         def _perceive_with(x: torch.Tensor, weight: np.ndarray) -> torch.Tensor:
             conv_weights = torch.from_numpy(weight.astype(np.float32)).to(self.device)
             conv_weights = conv_weights.view(1, 1, 3, 3).repeat(self.channel_n, 1, 1, 1)
+            x = x.to(self.device)
             return F.conv2d(x, conv_weights, padding=1, groups=self.channel_n)
 
         dx: np.ndarray = np.outer([1, 2, 1], [-1, 0, 1]) / 8.0  # Sobel filter
@@ -43,12 +44,13 @@ class CAModel(nn.Module):
 
         y1: torch.Tensor = _perceive_with(x, w1)
         y2: torch.Tensor = _perceive_with(x, w2)
-        y: torch.Tensor = torch.cat((x, y1, y2), 1)
+        y: torch.Tensor = torch.cat((x.to(self.device), y1, y2), 1)
         return y
 
     def update(
         self, x: torch.Tensor, fire_rate: float | None, angle: float
     ) -> torch.Tensor:
+        x = x.to(self.device)
         x = x.transpose(1, 3)
         pre_life_mask = self.alive(x)
 

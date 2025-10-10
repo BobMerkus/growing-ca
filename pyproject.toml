@@ -6,11 +6,13 @@ readme = "README.md"
 authors = [
     { name = "Bob Merkus", email = "bob.merkus@gmail.com" }
 ]
-requires-python = ">=3.13"
+requires-python = ">=3.11"
 dependencies = [
+    "dotenv>=0.9.9",
+    "imageio>=2.37.0",
     "numpy>=2.3.3",
+    "pydantic-settings>=2.11.0",
     "pygame>=2.6.1",
-    "torch>=2.8.0",
 ]
 
 [project.scripts]
@@ -23,12 +25,53 @@ build-backend = "hatchling.build"
 [dependency-groups]
 dev = [
     "deptry>=0.23.1",
-    "imageio>=2.37.0",
     "ipykernel>=6.30.1",
+    "jupyter>=1.1.1",
     "matplotlib>=3.10.7",
     "mypy>=1.18.2",
     "ruff>=0.14.0",
 ]
+
+[project.optional-dependencies]
+cpu = ["torch"]
+cuda = ["torch"]
+rocm = ["torch", "pytorch-triton-rocm"]
+
+[tool.uv]
+conflicts = [
+  [
+    { extra = "cpu" },
+    { extra = "cuda" },
+    { extra = "rocm" }
+  ]
+]
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cpu", extra = "cpu" },
+  { index = "pytorch-cuda", extra = "cuda" },
+  { index = "pytorch-rocm", extra = "rocm" }
+]
+pytorch-triton-rocm = [
+  { index = "pytorch-rocm", extra = "rocm" }
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cuda"
+url = "https://download.pytorch.org/whl/cu129"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-rocm"
+url = "https://download.pytorch.org/whl/nightly/rocm7.0"
+explicit = true
+
+
 
 [tool.mypy]
 files = ["src"]
