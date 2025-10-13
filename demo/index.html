@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Growing Neural Cellular Automata - Web Demo</title>
+  </head>
+  <body>
+    <h1>Growing Neural Cellular Automata</h1>
+
+    <div class="info">
+      <p><strong>Instructions:</strong></p>
+      <ul>
+        <li>Select an emoji model below (0-9)</li>
+        <li>Click and drag on the canvas to erase cells</li>
+        <li>Watch the cellular automata regenerate</li>
+        <li>Use Reset to start over with a single seed cell</li>
+      </ul>
+    </div>
+
+    <div class="emoji-selector">
+      <p><strong>Select Emoji:</strong></p>
+      <div id="emojiButtons"></div>
+    </div>
+
+    <div id="status">Select an emoji to start</div>
+
+    <div id="canvasContainer">
+      <canvas id="caCanvas" width="576" height="576"></canvas>
+    </div>
+
+    <div class="controls">
+      <button id="pauseBtn">Pause</button>
+      <button id="resetBtn">Reset</button>
+    </div>
+
+    <div class="references">
+      <p><strong>References:</strong></p>
+      <ul>
+        <li><a href="https://distill.pub/2020/growing-ca/">Mordvintsev, et al., "Growing Neural Cellular Automata", Distill, 2020.</a></li>
+        <li><a href="https://github.com/BobMerkus/growing-ca">Growing Neural Cellular Automata</a></li>
+      </ul>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

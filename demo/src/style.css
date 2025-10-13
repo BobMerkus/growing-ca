@@ -1,0 +1,100 @@
+body {
+  font-family: Arial, sans-serif;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f0f0f0;
+}
+
+h1 {
+  text-align: center;
+}
+
+#canvasContainer {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+canvas {
+  border: 2px solid #333;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  cursor: crosshair;
+}
+
+.controls {
+  text-align: center;
+  margin: 20px 0;
+}
+
+button {
+  padding: 10px 20px;
+  margin: 5px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.info {
+  background: white;
+  padding: 15px;
+  border-radius: 5px;
+  margin: 10px 0;
+}
+
+#status {
+  text-align: center;
+  font-weight: bold;
+  color: #333;
+}
+
+.emoji-selector {
+  text-align: center;
+  margin: 20px 0;
+}
+
+.emoji-btn {
+  padding: 5px;
+  margin: 5px;
+  cursor: pointer;
+  border: 3px solid #ccc;
+  background: white;
+  border-radius: 8px;
+  transition: all 0.2s;
+  display: inline-block;
+}
+
+.emoji-btn img {
+  display: block;
+  width: 40px;
+  height: 40px;
+  image-rendering: pixelated;
+}
+
+.emoji-btn:hover {
+  background: #e0e0e0;
+  border-color: #999;
+}
+
+.emoji-btn.active {
+  border-color: #4caf50;
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+}
+
+.references {
+  text-align: center;
+  margin: 20px 0;
+}
+
+.references ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.references li {
+  margin: 5px 0;
+}
+
+.references a {
+  color: #353535;
+}
