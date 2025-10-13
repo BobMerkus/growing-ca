@@ -7,70 +7,75 @@ import torch
 
 from growing_ca.core.trainer import CaTrainer
 
+import logging
+
 
 class TrainCaModel(BaseModel):
-    """Train a Cellular Automata model for a given emoji"""
+    """Train a Cellular Automata model for a given target image"""
 
     epochs: int = Field(default=8000, description="Number of epochs to train for")
-    emoji_index: int = Field(default=0, description="Index of the emoji to train on")
+    image_path: str = Field(
+        default="data/emojis/emoji_0.png",
+        description="Path to the target image to train on",
+    )
     experiment: str = Field(default="Regenerating", description="Experiment type")
-
     model_path: str | None = Field(
         default=None,
-        description="Path to save/load the model (defaults to models/emoji_{emoji_index}.pth)",
-    )
-    emoji_path: str = Field(
-        default="data/emoji.png", description="Path to the emoji to train on"
+        description="Path to save/load the model (defaults to models/{image_name}.pth)",
     )
     lr: float = Field(default=2e-3, description="Learning rate")
     batch_size: int = Field(default=8, description="Batch size")
     pool_size: int = Field(default=1024, description="Size of the pool to use")
-
+    cell_fire_rate: float = Field(default=0.5, description="Cell fire rate")
+    hidden_size: int = Field(default=128, description="Hidden size")
     device: str = Field(default="auto", description="Device to use")
     save_every: int = Field(default=100, description="Save every n epochs")
     log_every: int = Field(default=100, description="Log every n epochs")
 
     def cli_cmd(self) -> None:
         # Set device
+        logging.basicConfig(level=logging.INFO)
         if self.device == "auto":
             device = torch.device(torch.cuda.current_device())
         else:
             device = torch.device(self.device)
 
-        # Determine model path based on emoji index if not specified
-        model_path = self.model_path
-        if model_path is None:
-            model_path = f"models/emoji_{self.emoji_index}.pth"
-
-        # Check if emoji file exists
-        if not Path(self.emoji_path).exists():
-            print(f"Error: Emoji file not found at {self.emoji_path}")
-            print(
-                "Please ensure the emoji dataset is available or specify the correct path with --emoji-path"
+        # Check if image file exists
+        if not Path(self.image_path).exists():
+            logging.error(f"Error: Image file not found at {self.image_path}")
+            logging.error(
+                "Please ensure the image file is available or specify the correct path with --image-path"
             )
             sys.exit(1)
 
-        print("=" * 60)
-        print("Growing Neural Cellular Automata Training")
-        print("=" * 60)
-        print(f"Emoji index: {self.emoji_index}")
-        print(f"Experiment type: {self.experiment}")
-        print(f"Epochs: {self.epochs}")
-        print(f"Device: {device}")
-        print(f"Model path: {model_path}")
-        print("=" * 60)
+        # Determine model path based on image name if not specified
+        model_path = self.model_path
+        if model_path is None:
+            image_name = Path(self.image_path).stem
+            model_path = f"models/{image_name}.pth"
+
+        logging.info("=" * 60)
+        logging.info("Growing Neural Cellular Automata Training")
+        logging.info("=" * 60)
+        logging.info(f"Target image: {self.image_path}")
+        logging.info(f"Experiment type: {self.experiment}")
+        logging.info(f"Epochs: {self.epochs}")
+        logging.info(f"Device: {device}")
+        logging.info(f"Model path: {model_path}")
+        logging.info("=" * 60)
 
         try:
             # Initialize trainer
             trainer = CaTrainer(
-                target_emoji_index=self.emoji_index,
-                emoji_path=self.emoji_path,
+                target_image_path=self.image_path,
                 model_path=model_path,
                 experiment_type=self.experiment,
                 device=device,
                 lr=self.lr,
                 batch_size=self.batch_size,
                 pool_size=self.pool_size,
+                cell_fire_rate=self.cell_fire_rate,
+                hidden_size=self.hidden_size,
             )
 
             # Start training
@@ -80,12 +85,12 @@ class TrainCaModel(BaseModel):
                 log_every=self.log_every,
             )
 
-            print("\nTraining completed successfully!")
-            print(f"Final model saved to: {model_path}")
+            logging.info("\nTraining completed successfully!")
+            logging.info(f"Final model saved to: {model_path}")
 
         except KeyboardInterrupt:
-            print("\nTraining interrupted by user")
+            logging.info("\nTraining interrupted by user")
             sys.exit(1)
         except Exception as e:
-            print(f"\nError during training: {e}")
+            logging.exception(f"\nError during training: {e}")
             sys.exit(1)

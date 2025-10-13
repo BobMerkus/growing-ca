@@ -11,6 +11,8 @@ dependencies = [
     "dotenv>=0.9.9",
     "imageio>=2.37.0",
     "numpy>=2.3.3",
+    "onnx>=1.19.1",
+    "onnxscript>=0.5.3",
     "pydantic-settings>=2.11.0",
     "pygame>=2.6.1",
 ]
@@ -35,9 +37,9 @@ dev = [
 ]
 
 [project.optional-dependencies]
-cpu = ["torch"]
-cuda = ["torch"]
-rocm = ["torch", "pytorch-triton-rocm"]
+cpu = ["torch", "torchvision"]
+cuda = ["torch", "torchvision"]
+rocm = ["torch", "torchvision", "pytorch-triton-rocm"]
 
 [tool.uv]
 conflicts = [
@@ -50,6 +52,11 @@ conflicts = [
 
 [tool.uv.sources]
 torch = [
+  { index = "pytorch-cpu", extra = "cpu" },
+  { index = "pytorch-cuda", extra = "cuda" },
+  { index = "pytorch-rocm", extra = "rocm" }
+]
+torchvision = [
   { index = "pytorch-cpu", extra = "cpu" },
   { index = "pytorch-cuda", extra = "cuda" },
   { index = "pytorch-rocm", extra = "rocm" }

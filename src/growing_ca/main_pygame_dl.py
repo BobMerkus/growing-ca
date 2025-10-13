@@ -19,20 +19,19 @@ def visualize(
     cell_fire_rate: float,
     model_path: str,
     device: torch.device,
-    emoji_index: int,
-    emoji_path: str,
+    image_path: str,
 ) -> None:
     import pygame
     import imageio
 
-    # Load target emoji for visualization
-    def load_emoji(index: int) -> np.ndarray:
-        im = imageio.imread(emoji_path)
-        emoji = np.array(im[:, index * 40 : (index + 1) * 40].astype(np.float32))
-        emoji /= 255.0
-        return emoji
+    # Load target image for visualization
+    def load_image(path: str) -> np.ndarray:
+        im = imageio.imread(path)
+        img = np.array(im.astype(np.float32))
+        img /= 255.0
+        return img
 
-    target_emoji = load_emoji(emoji_index)
+    target_image = load_image(image_path)
 
     _rows: np.ndarray = (
         np.arange(map_shape[0])
@@ -55,8 +54,8 @@ def visualize(
         1,
     )
 
-    # Create a window that shows both the CA and the target emoji side by side
-    disp: displayer = displayer(map_shape, pix_size, target_emoji=target_emoji)
+    # Create a window that shows both the CA and the target image side by side
+    disp: displayer = displayer(map_shape, pix_size, target_image=target_image)
 
     isMouseDown: bool = False
     running: bool = True
@@ -92,7 +91,7 @@ def visualize(
 
 
 class VisualizeCaModel(BaseModel):
-    """Visualize a Cellular Automata model for a given emoji"""
+    """Visualize a Cellular Automata model for a given target image"""
 
     eraser_radius: int = Field(default=3, description="Eraser radius, in pixels")
     pix_size: int = Field(default=8, description="Pixel size, in pixels")
@@ -103,25 +102,27 @@ class VisualizeCaModel(BaseModel):
     cell_fire_rate: float = Field(default=0.5, description="Cell fire rate")
     model_path: str | None = Field(
         default=None,
-        description="Model path (defaults to models/emoji_{emoji_index}.pth)",
+        description="Model path (defaults to models/{image_name}.pth)",
     )
     device: str = Field(
         default_factory=lambda: "cuda" if torch.cuda.is_available() else "cpu",
         description="Device",
     )
-    emoji_index: int = Field(default=0, description="Index of the emoji to visualize")
-    emoji_path: str = Field(
-        default="data/emoji.png", description="Path to the emoji sprite sheet"
+    image_path: str = Field(
+        default="data/emojis/emoji_0.png", description="Path to the target image"
     )
 
     def cli_cmd(self) -> None:
+        from pathlib import Path
+
         logging.basicConfig(level=logging.INFO)
         logger.info(f"Visualizing model at {self.model_dump()}")
 
-        # Determine model path based on emoji index if not specified
+        # Determine model path based on image name if not specified
         model_path = self.model_path
         if model_path is None:
-            model_path = f"models/emoji_{self.emoji_index}.pth"
+            image_name = Path(self.image_path).stem
+            model_path = f"models/{image_name}.pth"
             logger.info(f"Using model path: {model_path}")
 
         visualize(
@@ -132,8 +133,7 @@ class VisualizeCaModel(BaseModel):
             cell_fire_rate=self.cell_fire_rate,
             model_path=model_path,
             device=torch.device(self.device),
-            emoji_index=self.emoji_index,
-            emoji_path=self.emoji_path,
+            image_path=self.image_path,
         )
 
 
@@ -144,8 +144,7 @@ if __name__ == "__main__":
         map_shape=(72, 72),
         channel_n=16,
         cell_fire_rate=0.5,
-        model_path="models/remaster_1.pth",
-        device=torch.device("cpu"),
-        emoji_index=0,
-        emoji_path="data/emoji.png",
+        model_path="models/emoji_0.pth",
+        device=torch.cuda.current_device(),
+        image_path="data/emojis/emoji_0.png",
     )

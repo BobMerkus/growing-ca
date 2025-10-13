@@ -13,10 +13,9 @@ class TestTrainCaModel:
         """Test model initialization with default values."""
         model = TrainCaModel()
         assert model.epochs == 8000
-        assert model.emoji_index == 0
+        assert model.image_path == "data/emojis/emoji_0.png"
         assert model.experiment == "Regenerating"
         assert model.model_path is None
-        assert model.emoji_path == "data/emoji.png"
         assert model.lr == 2e-3
         assert model.batch_size == 8
         assert model.pool_size == 1024
@@ -28,10 +27,9 @@ class TestTrainCaModel:
         """Test model initialization with custom values."""
         model = TrainCaModel(
             epochs=1000,
-            emoji_index=2,
+            image_path="custom/image.png",
             experiment="Growing",
             model_path="custom/path.pth",
-            emoji_path="custom/emoji.png",
             lr=1e-3,
             batch_size=16,
             pool_size=512,
@@ -40,10 +38,9 @@ class TestTrainCaModel:
             log_every=25,
         )
         assert model.epochs == 1000
-        assert model.emoji_index == 2
+        assert model.image_path == "custom/image.png"
         assert model.experiment == "Growing"
         assert model.model_path == "custom/path.pth"
-        assert model.emoji_path == "custom/emoji.png"
         assert model.lr == 1e-3
         assert model.batch_size == 16
         assert model.pool_size == 512
@@ -58,7 +55,7 @@ class TestTrainCaModel:
         mock_is_available.return_value = True
         mock_current_device.return_value = 0
 
-        model = TrainCaModel(device="auto", emoji_path="data/emoji.png")
+        model = TrainCaModel(device="auto", image_path="data/emoji.png")
 
         with patch("growing_ca.train.Path.exists", return_value=False):
             with pytest.raises(SystemExit) as exc_info:
@@ -66,8 +63,8 @@ class TestTrainCaModel:
             assert exc_info.value.code == 1
 
     @patch("growing_ca.train.Path.exists")
-    def test_cli_cmd_missing_emoji_file(self, mock_exists):
-        """Test cli_cmd exits when emoji file is missing."""
+    def test_cli_cmd_missing_image_file(self, mock_exists):
+        """Test cli_cmd exits when image file is missing."""
         mock_exists.return_value = False
         model = TrainCaModel(device="cpu")
 
@@ -84,12 +81,16 @@ class TestTrainCaModel:
         mock_trainer_class.return_value = mock_trainer
 
         model = TrainCaModel(
-            device="cpu", emoji_index=3, epochs=100, save_every=10, log_every=10
+            device="cpu",
+            image_path="data/test_image.png",
+            epochs=100,
+            save_every=10,
+            log_every=10,
         )
         model.cli_cmd()
 
-        # Check that trainer was initialized with correct model path
-        assert mock_trainer_class.call_args[1]["model_path"] == "models/emoji_3.pth"
+        # Check that trainer was initialized with correct model path (derived from image name)
+        assert mock_trainer_class.call_args[1]["model_path"] == "models/test_image.pth"
 
     @patch("growing_ca.train.Path.exists")
     @patch("growing_ca.train.CaTrainer")
@@ -122,7 +123,7 @@ class TestTrainCaModel:
         model = TrainCaModel(
             device="cpu",
             epochs=100,
-            emoji_index=1,
+            image_path="data/emojis/emoji_0.png",
             save_every=10,
             log_every=10,
         )
@@ -175,8 +176,7 @@ class TestTrainCaModel:
 
         model = TrainCaModel(
             device="cpu",
-            emoji_index=2,
-            emoji_path="test/emoji.png",
+            image_path="test/image.png",
             experiment="TestExperiment",
             lr=1e-4,
             batch_size=16,
@@ -189,8 +189,7 @@ class TestTrainCaModel:
 
         # Verify trainer initialization parameters
         call_kwargs = mock_trainer_class.call_args[1]
-        assert call_kwargs["target_emoji_index"] == 2
-        assert call_kwargs["emoji_path"] == "test/emoji.png"
+        assert call_kwargs["target_image_path"] == "test/image.png"
         assert call_kwargs["experiment_type"] == "TestExperiment"
         assert call_kwargs["device"] == torch.device("cpu")
         assert call_kwargs["lr"] == 1e-4

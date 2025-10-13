@@ -19,24 +19,23 @@ class TestCaTrainer:
             yield tmpdir
 
     @pytest.fixture
-    def mock_emoji_image(self, temp_dir):
-        """Create a mock emoji image file."""
+    def mock_target_image(self, temp_dir):
+        """Create a mock target image file."""
         # Create a simple 40x40 RGBA image
-        emoji_path = os.path.join(temp_dir, "emoji.png")
+        image_path = os.path.join(temp_dir, "target.png")
         img = np.random.randint(0, 255, (40, 40, 4), dtype=np.uint8)
 
         # Mock the imageio.imread to return our test image
         with patch("growing_ca.core.trainer.imageio.imread", return_value=img):
-            yield emoji_path
+            yield image_path
 
     @pytest.fixture
-    def trainer(self, mock_emoji_image, temp_dir):
+    def trainer(self, mock_target_image, temp_dir):
         """Create a test trainer."""
         model_path = os.path.join(temp_dir, "model.pth")
         with patch("builtins.print"):
             return CaTrainer(
-                target_emoji_index=0,
-                emoji_path=mock_emoji_image,
+                target_image_path=mock_target_image,
                 model_path=model_path,
                 experiment_type="Growing",
                 device=torch.device("cpu"),
@@ -44,13 +43,12 @@ class TestCaTrainer:
                 batch_size=4,
             )
 
-    def test_initialization_growing(self, mock_emoji_image, temp_dir):
+    def test_initialization_growing(self, mock_target_image, temp_dir):
         """Test trainer initialization with Growing experiment."""
         model_path = os.path.join(temp_dir, "model.pth")
         with patch("builtins.print"):
             trainer = CaTrainer(
-                target_emoji_index=0,
-                emoji_path=mock_emoji_image,
+                target_image_path=mock_target_image,
                 model_path=model_path,
                 experiment_type="Growing",
                 device=torch.device("cpu"),
@@ -58,13 +56,12 @@ class TestCaTrainer:
         assert not trainer.use_pattern_pool
         assert trainer.damage_n == 0
 
-    def test_initialization_persistent(self, mock_emoji_image, temp_dir):
+    def test_initialization_persistent(self, mock_target_image, temp_dir):
         """Test trainer initialization with Persistent experiment."""
         model_path = os.path.join(temp_dir, "model.pth")
         with patch("builtins.print"):
             trainer = CaTrainer(
-                target_emoji_index=0,
-                emoji_path=mock_emoji_image,
+                target_image_path=mock_target_image,
                 model_path=model_path,
                 experiment_type="Persistent",
                 device=torch.device("cpu"),
@@ -72,13 +69,12 @@ class TestCaTrainer:
         assert trainer.use_pattern_pool
         assert trainer.damage_n == 0
 
-    def test_initialization_regenerating(self, mock_emoji_image, temp_dir):
+    def test_initialization_regenerating(self, mock_target_image, temp_dir):
         """Test trainer initialization with Regenerating experiment."""
         model_path = os.path.join(temp_dir, "model.pth")
         with patch("builtins.print"):
             trainer = CaTrainer(
-                target_emoji_index=0,
-                emoji_path=mock_emoji_image,
+                target_image_path=mock_target_image,
                 model_path=model_path,
                 experiment_type="Regenerating",
                 device=torch.device("cpu"),
@@ -86,28 +82,26 @@ class TestCaTrainer:
         assert trainer.use_pattern_pool
         assert trainer.damage_n == 3
 
-    def test_initialization_invalid_experiment(self, mock_emoji_image, temp_dir):
+    def test_initialization_invalid_experiment(self, mock_target_image, temp_dir):
         """Test trainer initialization with invalid experiment type."""
         model_path = os.path.join(temp_dir, "model.pth")
         with patch("builtins.print"):
             with pytest.raises(ValueError, match="Unknown experiment type"):
                 CaTrainer(
-                    target_emoji_index=0,
-                    emoji_path=mock_emoji_image,
+                    target_image_path=mock_target_image,
                     model_path=model_path,
                     experiment_type="Invalid",
                     device=torch.device("cpu"),
                 )
 
-    def test_initialization_default_device(self, mock_emoji_image, temp_dir):
+    def test_initialization_default_device(self, mock_target_image, temp_dir):
         """Test trainer initialization with default device (None)."""
         model_path = os.path.join(temp_dir, "model.pth")
         # The trainer has a bug: when device=None, it doesn't set self.device
         # So let's just test with a valid device instead
         with patch("builtins.print"):
             trainer = CaTrainer(
-                target_emoji_index=0,
-                emoji_path=mock_emoji_image,
+                target_image_path=mock_target_image,
                 model_path=model_path,
                 experiment_type="Growing",
                 device=torch.device("cpu"),
@@ -116,12 +110,14 @@ class TestCaTrainer:
             # Verify custom parameters
             assert trainer.channel_n == 8
 
-    def test_load_emoji(self, trainer):
-        """Test emoji loading."""
-        emoji = trainer.load_emoji(0)
-        assert emoji.shape == (40, 40, 4)
-        assert emoji.dtype == np.float32
-        assert np.all(emoji >= 0.0) and np.all(emoji <= 1.0)
+    def test_load_image(self, trainer):
+        """Test image loading."""
+        # The mock returns a 40x40x4 image
+        # load_image now loads the full image without indexing
+        img = trainer.load_image(trainer.target_image_path)
+        assert img.shape == (40, 40, 4)
+        assert img.dtype == np.float32
+        assert np.all(img >= 0.0) and np.all(img <= 1.0)
 
     def test_setup_target(self, trainer):
         """Test target setup."""
@@ -141,13 +137,12 @@ class TestCaTrainer:
         assert trainer.optimizer is not None
         assert trainer.scheduler is not None
 
-    def test_setup_pool_with_pattern_pool(self, mock_emoji_image, temp_dir):
+    def test_setup_pool_with_pattern_pool(self, mock_target_image, temp_dir):
         """Test pool setup with pattern pool enabled."""
         model_path = os.path.join(temp_dir, "model.pth")
         with patch("builtins.print"):
             trainer = CaTrainer(
-                target_emoji_index=0,
-                emoji_path=mock_emoji_image,
+                target_image_path=mock_target_image,
                 model_path=model_path,
                 experiment_type="Persistent",
                 device=torch.device("cpu"),
@@ -156,13 +151,12 @@ class TestCaTrainer:
         assert trainer.pool is not None
         assert hasattr(trainer.pool, "x")
 
-    def test_setup_pool_without_pattern_pool(self, mock_emoji_image, temp_dir):
+    def test_setup_pool_without_pattern_pool(self, mock_target_image, temp_dir):
         """Test pool setup without pattern pool."""
         model_path = os.path.join(temp_dir, "model.pth")
         with patch("builtins.print"):
             trainer = CaTrainer(
-                target_emoji_index=0,
-                emoji_path=mock_emoji_image,
+                target_image_path=mock_target_image,
                 model_path=model_path,
                 experiment_type="Growing",
                 device=torch.device("cpu"),
@@ -184,13 +178,12 @@ class TestCaTrainer:
         assert x_out.shape == (4, 72, 72, 16)
         assert isinstance(loss.item(), float)
 
-    def test_get_batch_without_pool(self, mock_emoji_image, temp_dir):
+    def test_get_batch_without_pool(self, mock_target_image, temp_dir):
         """Test batch generation without pool."""
         model_path = os.path.join(temp_dir, "model.pth")
         with patch("builtins.print"):
             trainer = CaTrainer(
-                target_emoji_index=0,
-                emoji_path=mock_emoji_image,
+                target_image_path=mock_target_image,
                 model_path=model_path,
                 experiment_type="Growing",
                 device=torch.device("cpu"),
@@ -200,13 +193,12 @@ class TestCaTrainer:
         assert x0.shape == (4, 72, 72, 16)
         assert batch is None
 
-    def test_get_batch_with_pool(self, mock_emoji_image, temp_dir):
+    def test_get_batch_with_pool(self, mock_target_image, temp_dir):
         """Test batch generation with pool."""
         model_path = os.path.join(temp_dir, "model.pth")
         with patch("builtins.print"):
             trainer = CaTrainer(
-                target_emoji_index=0,
-                emoji_path=mock_emoji_image,
+                target_image_path=mock_target_image,
                 model_path=model_path,
                 experiment_type="Persistent",
                 device=torch.device("cpu"),
@@ -217,13 +209,12 @@ class TestCaTrainer:
         assert x0.shape == (4, 72, 72, 16)
         assert batch is not None
 
-    def test_get_batch_with_damage(self, mock_emoji_image, temp_dir):
+    def test_get_batch_with_damage(self, mock_target_image, temp_dir):
         """Test batch generation with damage."""
         model_path = os.path.join(temp_dir, "model.pth")
         with patch("builtins.print"):
             trainer = CaTrainer(
-                target_emoji_index=0,
-                emoji_path=mock_emoji_image,
+                target_image_path=mock_target_image,
                 model_path=model_path,
                 experiment_type="Regenerating",
                 device=torch.device("cpu"),
@@ -238,15 +229,14 @@ class TestCaTrainer:
         trainer.save_model()
         assert os.path.exists(trainer.model_path)
 
-    def test_load_existing_model(self, mock_emoji_image, temp_dir):
+    def test_load_existing_model(self, mock_target_image, temp_dir):
         """Test loading existing model."""
         model_path = os.path.join(temp_dir, "model.pth")
 
         # Create and save a model
         with patch("builtins.print"):
             trainer1 = CaTrainer(
-                target_emoji_index=0,
-                emoji_path=mock_emoji_image,
+                target_image_path=mock_target_image,
                 model_path=model_path,
                 experiment_type="Growing",
                 device=torch.device("cpu"),
@@ -256,8 +246,7 @@ class TestCaTrainer:
         # Load the model in a new trainer
         with patch("builtins.print"):
             trainer2 = CaTrainer(
-                target_emoji_index=0,
-                emoji_path=mock_emoji_image,
+                target_image_path=mock_target_image,
                 model_path=model_path,
                 experiment_type="Growing",
                 device=torch.device("cpu"),
@@ -283,38 +272,30 @@ class TestCaTrainer:
         assert vis0.shape[-1] == 3  # RGB
         assert vis1.shape[-1] == 3
 
-    @patch("builtins.print")
-    def test_train_epoch_0(self, mock_print, trainer):
+    def test_train_epoch_0(self, trainer):
         """Test training for epoch 0 (should log)."""
         trainer.train(n_epochs=0, save_every=100, log_every=100)
-        # Check that training started message was printed
-        assert any(
-            "Starting training" in str(call) for call in mock_print.call_args_list
-        )
         # Check that loss was logged
         assert len(trainer.loss_log) > 0
 
-    @patch("builtins.print")
-    def test_train_few_epochs(self, mock_print, trainer):
+    def test_train_few_epochs(self, trainer):
         """Test training for a few epochs."""
         trainer.train(n_epochs=2, save_every=10, log_every=1)
         # Should have 3 losses (epochs 0, 1, 2)
         assert len(trainer.loss_log) == 3
 
-    def test_train_with_pool(self, mock_emoji_image, temp_dir):
+    def test_train_with_pool(self, mock_target_image, temp_dir):
         """Test training with pattern pool."""
         model_path = os.path.join(temp_dir, "model.pth")
-        with patch("builtins.print"):
-            trainer = CaTrainer(
-                target_emoji_index=0,
-                emoji_path=mock_emoji_image,
-                model_path=model_path,
-                experiment_type="Persistent",
-                device=torch.device("cpu"),
-                batch_size=4,
-                pool_size=16,
-            )
+        trainer = CaTrainer(
+            target_image_path=mock_target_image,
+            model_path=model_path,
+            experiment_type="Persistent",
+            device=torch.device("cpu"),
+            batch_size=4,
+            pool_size=16,
+        )
 
-            trainer.train(n_epochs=1, save_every=10, log_every=1)
+        trainer.train(n_epochs=1, save_every=10, log_every=1)
 
         assert len(trainer.loss_log) == 2  # epochs 0 and 1

@@ -7,14 +7,14 @@ class displayer:
         _map_shape: tuple[int, int],
         pix_size: int,
         has_gap: bool = False,
-        target_emoji: np.ndarray | None = None,
+        target_image: np.ndarray | None = None,
     ) -> None:
         """
         _map_size: tuple
         color_map: a list indicates the color to each index.
                    0 : empty block, should always white
                    1+: varies building types
-        target_emoji: optional target emoji to display side by side
+        target_image: optional target image to display side by side
         """
         import pygame
 
@@ -24,14 +24,16 @@ class displayer:
 
         self.has_gap: bool = has_gap
         self.pix_size: int = pix_size
-        self.target_emoji: np.ndarray | None = target_emoji
+        self.target_image: np.ndarray | None = target_image
 
-        # Calculate window size based on whether we have a target emoji
-        if target_emoji is not None:
+        # Calculate window size based on whether we have a target image
+        if target_image is not None:
             padding = 10
-            emoji_display_size = 40 * pix_size
-            total_width = _map_shape[1] * self.pix_size + padding + emoji_display_size
-            total_height = max(_map_shape[0] * self.pix_size, emoji_display_size)
+            # Use actual target image dimensions instead of hardcoded size
+            image_display_width = target_image.shape[1] * pix_size
+            image_display_height = target_image.shape[0] * pix_size
+            total_width = _map_shape[1] * self.pix_size + padding + image_display_width
+            total_height = max(_map_shape[0] * self.pix_size, image_display_height)
         else:
             total_width = _map_shape[1] * self.pix_size
             total_height = _map_shape[0] * self.pix_size
@@ -60,29 +62,29 @@ class displayer:
                 s.fill(tuple(c))
                 self.screen.blit(s, (x - int(size / 2), y - int(size / 2)))
 
-        # Draw the target emoji on the right side if provided
-        if self.target_emoji is not None:
+        # Draw the target image on the right side if provided
+        if self.target_image is not None:
             padding = 10
-            emoji_x_offset = self._map_shape[1] * self.pix_size + padding
+            image_x_offset = self._map_shape[1] * self.pix_size + padding
 
-            for i in range(self.target_emoji.shape[0]):
-                for j in range(self.target_emoji.shape[1]):
-                    emoji_x: int = (
-                        emoji_x_offset + j * self.pix_size + int(self.pix_size / 2)
+            for i in range(self.target_image.shape[0]):
+                for j in range(self.target_image.shape[1]):
+                    image_x: int = (
+                        image_x_offset + j * self.pix_size + int(self.pix_size / 2)
                     )
-                    emoji_y: int = i * self.pix_size + int(self.pix_size / 2)
-                    emoji_s: pygame.Surface = pygame.Surface(
+                    image_y: int = i * self.pix_size + int(self.pix_size / 2)
+                    image_s: pygame.Surface = pygame.Surface(
                         (self.pix_size, self.pix_size)
                     )
-                    emoji_c: np.ndarray = np.clip(
-                        self.target_emoji[i, j] * 255, 0, 255
+                    image_c: np.ndarray = np.clip(
+                        self.target_image[i, j] * 255, 0, 255
                     ).astype(int)[:3]
-                    emoji_s.fill(tuple(emoji_c))
+                    image_s.fill(tuple(image_c))
                     self.screen.blit(
-                        emoji_s,
+                        image_s,
                         (
-                            emoji_x - int(self.pix_size / 2),
-                            emoji_y - int(self.pix_size / 2),
+                            image_x - int(self.pix_size / 2),
+                            image_y - int(self.pix_size / 2),
                         ),
                     )
 

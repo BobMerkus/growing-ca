@@ -3,6 +3,7 @@ import dotenv
 
 from growing_ca.train import TrainCaModel
 from growing_ca.main_pygame_dl import VisualizeCaModel
+from growing_ca.convert_onnx import ConvertOnnx
 
 
 class GrowingCa(BaseSettings):
@@ -10,18 +11,13 @@ class GrowingCa(BaseSettings):
 
     Reference:
     Mordvintsev, et al., "Growing Neural Cellular Automata", Distill, 2020.
-
-    Usage:
-    ```
-    growing-ca train --help
-    growing-ca visualize --help
-    ```
     """
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     train: CliSubCommand[TrainCaModel]
     visualize: CliSubCommand[VisualizeCaModel]
+    convert_onnx: CliSubCommand[ConvertOnnx]
 
     def cli_cmd(self) -> None:
         CliApp.run_subcommand(self)
