@@ -98,6 +98,7 @@ class CaTrainer:
 
     def _setup_pool(self) -> None:
         self.seed = make_seed((self.h, self.w), self.channel_n)
+        self.pool: SamplePool | None
         if self.use_pattern_pool:
             self.pool = SamplePool(x=np.repeat(self.seed[None, ...], self.pool_size, 0))
         else:
@@ -117,14 +118,19 @@ class CaTrainer:
         self.scheduler.step()
         return x, loss
 
-    def get_batch(self) -> torch.Tensor:
+    def get_batch(self) -> tuple[torch.Tensor, SamplePool | None]:
         if self.use_pattern_pool and self.pool is not None:
             batch = self.pool.sample(self.batch_size)
-            x0 = torch.from_numpy(batch.x.astype(np.float32)).to(self.device)
-            loss_rank = (
-                self.loss_f(x0, self.pad_target).detach().cpu().numpy().argsort()[::-1]
+            batch_x: np.ndarray = getattr(batch, "x")
+            x0_tensor = torch.from_numpy(batch_x.astype(np.float32)).to(self.device)
+            loss_rank_array: np.ndarray = (
+                self.loss_f(x0_tensor, self.pad_target)
+                .detach()
+                .cpu()
+                .numpy()
+                .argsort()[::-1]
             )
-            x0 = batch.x[loss_rank]
+            x0 = batch_x[loss_rank_array]
             x0[:1] = self.seed
             if self.damage_n:
                 damage = (
@@ -133,8 +139,8 @@ class CaTrainer:
                 x0[-self.damage_n :] *= damage
             return torch.from_numpy(x0.astype(np.float32)).to(self.device), batch
         else:
-            x0 = np.repeat(self.seed[None, ...], self.batch_size, 0)
-            return torch.from_numpy(x0.astype(np.float32)).to(self.device), None
+            x0_np: np.ndarray = np.repeat(self.seed[None, ...], self.batch_size, 0)
+            return torch.from_numpy(x0_np.astype(np.float32)).to(self.device), None
 
     def train(
         self, n_epochs: int = 8000, save_every: int = 100, log_every: int = 100
@@ -154,7 +160,8 @@ class CaTrainer:
             x, loss = self.train_step(x0, self.pad_target, steps)
 
             if self.use_pattern_pool and batch is not None:
-                batch.x[:] = x.detach().cpu().numpy()
+                batch_x_attr: np.ndarray = getattr(batch, "x")
+                batch_x_attr[:] = x.detach().cpu().numpy()
                 batch.commit()
 
             self.loss_log.append(loss.item())

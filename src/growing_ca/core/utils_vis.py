@@ -44,11 +44,13 @@ def to_rgb(x: np.ndarray) -> np.ndarray:
     rgb: np.ndarray
     a: np.ndarray
     rgb, a = x[..., :3], to_alpha(x)
-    return np.clip(1.0 - a + rgb, 0, 0.9999)
+    result: np.ndarray = np.clip(1.0 - a + rgb, 0, 0.9999)
+    return result
 
 
 def get_living_mask(x: torch.Tensor) -> torch.Tensor:
-    return nn.MaxPool2d(3, stride=1, padding=1)(x[:, 3:4, :, :]) > 0.1
+    result: torch.Tensor = nn.MaxPool2d(3, stride=1, padding=1)(x[:, 3:4, :, :]) > 0.1
+    return result
 
 
 def make_seeds(shape: tuple[int, int], n_channels: int, n: int = 1) -> np.ndarray:

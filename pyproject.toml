@@ -29,6 +29,8 @@ dev = [
     "jupyter>=1.1.1",
     "matplotlib>=3.10.7",
     "mypy>=1.18.2",
+    "pytest>=8.4.2",
+    "pytest-cov>=7.0.0",
     "ruff>=0.14.0",
 ]
 
@@ -82,3 +84,18 @@ check_untyped_defs = true
 warn_return_any = true
 warn_unused_ignores = true
 show_error_codes = true
+
+[tool.coverage.run]
+omit = [
+    "*/displayer.py",
+    "*/main_pygame_dl.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.:",
+    "raise AssertionError",
+    "raise NotImplementedError",
+]

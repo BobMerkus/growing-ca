@@ -1,5 +1,5 @@
-import dotenv
 from pydantic_settings import CliApp, CliSubCommand, BaseSettings, SettingsConfigDict
+import dotenv
 
 from growing_ca.train import TrainCaModel
 from growing_ca.main_pygame_dl import VisualizeCaModel
@@ -28,7 +28,7 @@ class GrowingCa(BaseSettings):
 
 
 def main() -> None:
-    dotenv.load_dotenv()  # apply environment variables for platform specifc settings
+    dotenv.load_dotenv()  # Load .env file for environment variables related to pytorch
     cmd = CliApp.run(GrowingCa)
     print(cmd.model_dump())
 

@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: CLI Train",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "growing_ca.cli",
+            "args": ["train"]
+        },
+        {
+            "name": "Python Debugger: CLI Visualize",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "growing_ca.cli",
+            "args": ["visualize"]
+        }
+    ]
+}

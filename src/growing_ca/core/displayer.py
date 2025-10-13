@@ -67,15 +67,23 @@ class displayer:
 
             for i in range(self.target_emoji.shape[0]):
                 for j in range(self.target_emoji.shape[1]):
-                    x: int = emoji_x_offset + j * self.pix_size + int(self.pix_size / 2)
-                    y: int = i * self.pix_size + int(self.pix_size / 2)
-                    s: pygame.Surface = pygame.Surface((self.pix_size, self.pix_size))
-                    c: np.ndarray = np.clip(
+                    emoji_x: int = (
+                        emoji_x_offset + j * self.pix_size + int(self.pix_size / 2)
+                    )
+                    emoji_y: int = i * self.pix_size + int(self.pix_size / 2)
+                    emoji_s: pygame.Surface = pygame.Surface(
+                        (self.pix_size, self.pix_size)
+                    )
+                    emoji_c: np.ndarray = np.clip(
                         self.target_emoji[i, j] * 255, 0, 255
                     ).astype(int)[:3]
-                    s.fill(tuple(c))
+                    emoji_s.fill(tuple(emoji_c))
                     self.screen.blit(
-                        s, (x - int(self.pix_size / 2), y - int(self.pix_size / 2))
+                        emoji_s,
+                        (
+                            emoji_x - int(self.pix_size / 2),
+                            emoji_y - int(self.pix_size / 2),
+                        ),
                     )
 
         pygame.display.update()
