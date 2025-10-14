@@ -1,0 +1,39 @@
+name: Type Check
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '*.py'
+      - 'pyproject.toml'
+      - 'uv.lock'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '*.py'
+      - 'pyproject.toml'
+      - 'uv.lock'
+  workflow_dispatch:
+
+jobs:
+  mypy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Install dependencies
+        run: uv sync --frozen --dev
+
+      - name: Run mypy
+        run: uv run mypy
