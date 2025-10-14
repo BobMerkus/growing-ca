@@ -19,6 +19,12 @@ export class CellularAutomata {
   private isMouseDown = false;
   private animationFrameId: number | null = null;
   private currentEmoji: number | null = null;
+  private speedMultiplier = 1.0;
+  private totalSteps = 0;
+  private lastFrameTime = 0;
+  private stepCount = 0;
+  private lastStepTime = 0;
+  private lastFpsUpdate = 0;
 
   constructor(canvas: HTMLCanvasElement, statusDiv: HTMLElement) {
     this.canvas = canvas;
@@ -117,6 +123,8 @@ export class CellularAutomata {
       // Update state
       this.state = new Float32Array(output.data as Float32Array);
 
+      this.totalSteps++;
+      this.stepCount++;
       this.render();
     } catch (error) {
       console.error('Error during inference:', error);
@@ -126,11 +134,66 @@ export class CellularAutomata {
   }
 
   // Animation loop
-  private async animate(): Promise<void> {
-    if (this.isRunning) {
-      await this.step();
+  private async animate(currentTime: number = 0): Promise<void> {
+    // Initialize timing
+    if (this.lastFrameTime === 0) {
+      this.lastFrameTime = currentTime;
+      this.lastFpsUpdate = currentTime;
+      this.lastStepTime = currentTime;
     }
-    this.animationFrameId = requestAnimationFrame(() => this.animate());
+
+    if (this.isRunning) {
+      // For infinite speed, run as many steps as possible
+      if (this.speedMultiplier === Infinity) {
+        // Run 10 steps per frame for infinite speed
+        for (let i = 0; i < 10; i++) {
+          await this.step();
+        }
+      } else {
+        // Use time-based stepping for all finite speeds
+        // speedMultiplier represents steps per second
+        const targetInterval = 1000 / this.speedMultiplier; // milliseconds between steps
+        const timeSinceLastStep = currentTime - this.lastStepTime;
+
+        if (timeSinceLastStep >= targetInterval) {
+          // Calculate how many steps we should have taken
+          const stepsDue = Math.floor(timeSinceLastStep / targetInterval);
+
+          // Run the steps (cap at 10 per frame to avoid freezing)
+          const stepsToRun = Math.min(stepsDue, 10);
+          for (let i = 0; i < stepsToRun; i++) {
+            await this.step();
+          }
+
+          // Update last step time
+          this.lastStepTime = currentTime - (timeSinceLastStep % targetInterval);
+        }
+      }
+    }
+
+    // Update FPS display every second
+    if (currentTime - this.lastFpsUpdate >= 1000) {
+      const stepsPerSecond = this.stepCount / ((currentTime - this.lastFpsUpdate) / 1000);
+      this.updateStepInfo(stepsPerSecond);
+      this.stepCount = 0;
+      this.lastFpsUpdate = currentTime;
+    }
+
+    this.lastFrameTime = currentTime;
+    this.animationFrameId = requestAnimationFrame((time) => this.animate(time));
+  }
+
+  // Update step information display
+  private updateStepInfo(stepsPerSecond: number): void {
+    const totalStepsEl = document.getElementById('totalSteps');
+    const currentSpeedEl = document.getElementById('currentSpeed');
+
+    if (totalStepsEl) {
+      totalStepsEl.textContent = this.totalSteps.toString();
+    }
+    if (currentSpeedEl) {
+      currentSpeedEl.textContent = stepsPerSecond.toFixed(1);
+    }
   }
 
   // Get grid position from mouse event
@@ -231,6 +294,8 @@ export class CellularAutomata {
   public reset(): void {
     this.initState();
     this.render();
+    this.totalSteps = 0;
+    this.updateStepInfo(0);
   }
 
   public getCurrentEmoji(): number | null {
@@ -240,5 +305,13 @@ export class CellularAutomata {
   public clearCanvas(): void {
     this.ctx.fillStyle = '#f0f0f0';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+  }
+
+  public setSpeed(multiplier: number): void {
+    this.speedMultiplier = multiplier;
+  }
+
+  public getTotalSteps(): number {
+    return this.totalSteps;
   }
 }
