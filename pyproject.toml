@@ -37,7 +37,7 @@ dev = [
 ]
 
 [project.optional-dependencies]
-cpu = ["torch", "torchvision"]
+cpu = ["torch"]
 cuda = ["torch", "torchvision"]
 rocm = ["torch", "torchvision", "pytorch-triton-rocm"]
 
@@ -57,7 +57,6 @@ torch = [
   { index = "pytorch-rocm", extra = "rocm" }
 ]
 torchvision = [
-  { index = "pytorch-cpu", extra = "cpu" },
   { index = "pytorch-cuda", extra = "cuda" },
   { index = "pytorch-rocm", extra = "rocm" }
 ]
@@ -91,6 +90,7 @@ check_untyped_defs = true
 warn_return_any = true
 warn_unused_ignores = true
 show_error_codes = true
+cache_dir = "/dev/null"
 
 [tool.coverage.run]
 omit = [

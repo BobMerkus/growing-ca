@@ -145,6 +145,6 @@ if __name__ == "__main__":
         channel_n=16,
         cell_fire_rate=0.5,
         model_path="models/emoji_0.pth",
-        device=torch.cuda.current_device(),
+        device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
         image_path="data/emojis/emoji_0.png",
     )
