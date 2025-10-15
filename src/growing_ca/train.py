@@ -36,7 +36,10 @@ class TrainCaModel(BaseModel):
         # Set device
         logging.basicConfig(level=logging.INFO)
         if self.device == "auto":
-            device = torch.device(torch.cuda.current_device())
+            if torch.cuda.is_available():
+                device = torch.device(torch.cuda.current_device())
+            else:
+                device = torch.device("cpu")
         else:
             device = torch.device(self.device)
 

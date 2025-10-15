@@ -5,7 +5,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 
 
-def convert_onnx(model_path: Path, onnx_model_path: Path | None = None):
+def convert_onnx(model_path: Path, onnx_model_path: Path | None = None) -> None:
     """Convert a PyTorch model to an ONNX model"""
     import onnx
 
@@ -23,7 +23,7 @@ def convert_onnx(model_path: Path, onnx_model_path: Path | None = None):
     temp_path = str(onnx_model_path) + ".tmp"
     torch.onnx.export(
         pytorch_model,
-        dummy_input,
+        (dummy_input,),
         temp_path,
         verbose=True,
         export_params=True,
@@ -57,7 +57,7 @@ class ConvertOnnx(BaseModel):
         description="Path to save the converted model (optional, defaults to <model_path>.onnx)",
     )
 
-    def cli_cmd(self):
+    def cli_cmd(self) -> None:
         convert_onnx(self.model_path, self.onnx_model_path)
 
 

@@ -50,10 +50,15 @@ class TestTrainCaModel:
 
     @patch("growing_ca.train.torch.cuda.is_available")
     @patch("growing_ca.train.torch.cuda.current_device")
-    def test_cli_cmd_auto_device_cuda(self, mock_current_device, mock_is_available):
+    @patch("growing_ca.train.torch.device")
+    def test_cli_cmd_auto_device_cuda(
+        self, mock_device, mock_current_device, mock_is_available
+    ):
         """Test cli_cmd with auto device when CUDA is available."""
         mock_is_available.return_value = True
         mock_current_device.return_value = 0
+        mock_cuda_device = MagicMock()
+        mock_device.return_value = mock_cuda_device
 
         model = TrainCaModel(device="auto", image_path="data/emoji.png")
 
@@ -61,6 +66,7 @@ class TestTrainCaModel:
             with pytest.raises(SystemExit) as exc_info:
                 model.cli_cmd()
             assert exc_info.value.code == 1
+            mock_device.assert_called_with(0)
 
     @patch("growing_ca.train.Path.exists")
     def test_cli_cmd_missing_image_file(self, mock_exists):
